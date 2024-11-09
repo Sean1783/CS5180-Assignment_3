@@ -1,11 +1,11 @@
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
+from db_manager import *
 from bs4 import BeautifulSoup
-import re
 
-seed = 'https://www.cpp.edu/sci/computer-science/'
 base_url = 'https://www.cpp.edu'
 target_url = 'https://www.cpp.edu/sci/computer-science/faculty-and-staff/faculty-research-int.shtml'
+collection_name = 'page_data'
 
 def visit_link_and_gather_anchor_tags(link_to_visit):
     try:
@@ -28,7 +28,6 @@ def create_list_of_raw_links(unfiltered_url_list):
     for individual_url in unfiltered_url_list:
         url_string = individual_url.get('href')
         if '.shtml' or 'html' in url_string:
-        # if '.shtml' in url_string:
             filtered_url_list.append(url_string)
     return filtered_url_list
 
@@ -59,34 +58,19 @@ def output_target_tag(current_link):
     tag_data = bs.find_all('h1', {'class': 'cpp-h1'})
     print(tag_data)
 
-def output_html(some_url_link):
+def get_html(some_url_link):
     html = urlopen(some_url_link)
     bs = BeautifulSoup(html.read(), 'html.parser')
-    print(bs.body.prettify())
-
-# def crawler(seed_url):
-#     base_frontier = generate_new_frontier_urls(seed_url)
-#     for link in base_frontier:
-#         if is_target_link(link, target_url):
-#             # output_html(link)
-#             # output_target_tag(link)
-#             return
-#         additional_frontier = generate_new_frontier_urls(link)
-#         for new_link in additional_frontier:
-#             if new_link not in base_frontier:
-#                 base_frontier.append(new_link)
-#         print(link)
+    return bs.body.prettify()
 
 def crawler(seed_url):
     base_frontier = generate_new_frontier_urls(seed_url)
     while base_frontier:
         link = base_frontier.pop(0)
-        # Retrieve the html data here.
-        # Store the html page data here.
-        if is_target_link(link, target_url):
-            # Flag the target page here.
-            # Clear the frontier here.
-            output_html(link)
+        is_target = is_target_link(link, target_url)
+        insert_document_into_database(link, is_target)
+        if is_target:
+            base_frontier.clear()
             return
         additional_frontier = generate_new_frontier_urls(link)
         for new_link in additional_frontier:
@@ -94,8 +78,8 @@ def crawler(seed_url):
                 base_frontier.append(new_link)
         print(link)
 
-crawler(seed)
-
-
-
-
+def insert_document_into_database(url_string, is_target):
+    db_connection = connect_to_database()
+    collection = db_connection[collection_name]
+    page_html = get_html(url_string)
+    create_document(collection, url_string, page_html, is_target)
