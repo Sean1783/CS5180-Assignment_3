@@ -39,16 +39,6 @@ class Crawler:
             full_link = link if self.base_url in link else self.base_url + link
             frontier_urls.add(full_link)
         return list(frontier_urls)
-        # frontier_urls = []
-        # for link in filtered_url_list:
-        #     if self.base_url not in link:
-        #         reconstructed_link = self.base_url + link
-        #         if reconstructed_link not in frontier_urls:
-        #             frontier_urls.append(reconstructed_link)
-        #     else:
-        #         if link not in frontier_urls:
-        #             frontier_urls.append(link)
-        # return frontier_urls
 
 
     def generate_new_frontier_urls(self, current_link):
@@ -62,16 +52,7 @@ class Crawler:
         return current_link == link_to_find
 
 
-    # def output_target_tag(self, current_link):
-    #     html = urlopen(current_link)
-    #     bs = BeautifulSoup(html.read(), 'html.parser')
-    #     tag_data = bs.find_all('h1', {'class': 'cpp-h1'})
-    #     print(tag_data)
-
-
     def get_html(self, some_url_link):
-        # html = urlopen(some_url_link)
-        # bs = BeautifulSoup(html.read(), 'html.parser')
         html = None
         try:
             with urlopen(some_url_link) as html:
@@ -84,7 +65,6 @@ class Crawler:
         except Exception as e:
             print(f"An unexpected error occurred: {e}")
         return ""
-        # return bs.body.prettify()
 
 
     def crawl(self, seed_url, db_manager):
