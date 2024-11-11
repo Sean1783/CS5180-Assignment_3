@@ -27,3 +27,11 @@ class DatabaseManager:
             "is_target": is_target
         })
         return result.inserted_id
+
+    def get_document_html(self, page_url):
+        db_connection = self.connect_to_database()
+        collection = db_connection[self.collection_name]
+        result = collection.find_one({
+            "url": page_url
+        })
+        return result

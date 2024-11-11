@@ -2,6 +2,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
 
+
 class Crawler:
     def __init__(self, base_url, target_url):
         self.base_url = base_url
@@ -15,11 +16,11 @@ class Crawler:
                 bs = BeautifulSoup(html.read(), 'html.parser')
                 return bs.find_all('a')
         except HTTPError as e:
-            print(f"HTTP error: {e}")
+            print(f"HTTP error: {e}" + link_to_visit)
         except URLError as e:
-            print(f"URL error: {e}")
+            print(f"URL error: {e}" + link_to_visit)
         except Exception as e:
-            print(f"An unexpected error occurred: {e}")
+            print(f"An unexpected error occurred: {e}" + link_to_visit)
         return []
 
 
@@ -27,24 +28,43 @@ class Crawler:
         filtered_url_list = []
         for individual_url in unfiltered_url_list:
             url_string = individual_url.get('href')
-            # if '.shtml' or 'html' in url_string:
             if url_string and url_string.endswith(('.html', '.shtml')):
                 filtered_url_list.append(url_string)
+                # print(url_string)
         return filtered_url_list
 
 
-    def construct_valid_links(self, filtered_url_list):
+    def construct_full_links(self, filtered_url_list):
         frontier_urls = set()
         for link in filtered_url_list:
-            full_link = link if self.base_url in link else self.base_url + link
-            frontier_urls.add(full_link)
+            if self.is_correct_domain(link):
+                if link.startswith('/'):
+                    full_link = self.base_url + link
+                elif link.startswith(self.base_url):
+                    full_link = link
+                else:
+                    full_link = self.base_url + '/' + link
+                # full_link = link if self.base_url in link else self.base_url + link
+                # print(full_link)
+                frontier_urls.add(full_link)
         return list(frontier_urls)
+
+
+    def is_correct_domain(self, link):
+        scheme = 'http://'
+        scheme_secure = 'https://'
+        if link.startswith(self.base_url):
+            return True
+        elif link.startswith(scheme) or link.startswith(scheme_secure):
+            return False
+        else:
+            return True
 
 
     def generate_new_frontier_urls(self, current_link):
         anchor_tags = self.visit_link_and_gather_anchor_tags(current_link)
         raw_list = self.create_list_of_raw_links(anchor_tags)
-        frontier = self.construct_valid_links(raw_list)
+        frontier = self.construct_full_links(raw_list)
         return frontier
 
 
@@ -57,13 +77,14 @@ class Crawler:
         try:
             with urlopen(some_url_link) as html:
                 bs = BeautifulSoup(html.read(), 'html.parser')
-                return bs.body.prettify()
+                # return bs.body.prettify()
+                return bs.prettify()
         except HTTPError as e:
-            print(f"HTTP error: {e}")
+            print(f"HTTP error: {e}" + some_url_link)
         except URLError as e:
-            print(f"URL error: {e}")
+            print(f"URL error: {e}" + some_url_link)
         except Exception as e:
-            print(f"An unexpected error occurred: {e}")
+            print(f"An unexpected error occurred: {e}" + some_url_link)
         return ""
 
 
@@ -73,7 +94,8 @@ class Crawler:
             link = base_frontier.pop(0)
             is_target = self.is_target_link(link, self.target_url)
             page_html = self.get_html(link)
-            db_manager.insert_document(link, page_html, is_target)
+            if page_html:
+                db_manager.insert_document(link, page_html, is_target)
             if is_target:
                 base_frontier.clear()
                 return
