@@ -18,14 +18,15 @@ class DatabaseManager:
             print("Database did not connect successfully")
 
 
-    def insert_document(self, page_url, page_html, is_target):
+    def insert_document(self, doc_obj):
         db_connection = self.connect_to_database()
         collection = db_connection[self.collection_name]
-        result = collection.insert_one({
-            "url": page_url,
-            "html": page_html,
-            "is_target": is_target
-        })
+        result = collection.insert_one(doc_obj)
+        # result = collection.insert_one({
+        #     "url": page_url,
+        #     "html": page_html,
+        #     "is_target": is_target
+        # })
         return result.inserted_id
 
     def get_document_html(self, page_url):

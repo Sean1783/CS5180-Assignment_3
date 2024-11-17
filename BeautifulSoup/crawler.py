@@ -44,7 +44,6 @@ class Crawler:
                     full_link = link
                 else:
                     full_link = self.base_url + '/' + link
-                # full_link = link if self.base_url in link else self.base_url + link
                 # print(full_link)
                 frontier_urls.add(full_link)
         return list(frontier_urls)
@@ -77,7 +76,6 @@ class Crawler:
         try:
             with urlopen(some_url_link) as html:
                 bs = BeautifulSoup(html.read(), 'html.parser')
-                # return bs.body.prettify()
                 return bs.prettify()
         except HTTPError as e:
             print(f"HTTP error: {e}" + some_url_link)
@@ -95,7 +93,11 @@ class Crawler:
             is_target = self.is_target_link(link, self.target_url)
             page_html = self.get_html(link)
             if page_html:
-                db_manager.insert_document(link, page_html, is_target)
+                doc_obj = dict()
+                doc_obj["url"] = link
+                doc_obj["page_html"] = page_html
+                doc_obj["is_target"] = is_target
+                db_manager.insert_document(doc_obj)
             if is_target:
                 base_frontier.clear()
                 return
